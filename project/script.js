@@ -1,4 +1,6 @@
 const STORAGE_KEY = "film-card";
+const DRAFT_KEY = "film-draft";
+const HINT_KEY = "film-hint-shown";
 
 const form = document.querySelector(".card-form");
 const emptyPanel = document.querySelector('[data-state-panel="empty"]');
@@ -8,9 +10,9 @@ const createButton = document.querySelector('[data-action="create"]');
 const deleteButton = document.querySelector('[data-action="delete"]');
 const editButton = document.querySelector('[data-action="edit"]');
 const cancelButton = document.querySelector('[data-action="cancel"]');
-const HINT_KEY = "film-hint-shown";
 const statusText = document.querySelector(".workspace__status");
 const ratingError = document.querySelector('[data-error="rating"]');
+const formNote = document.querySelector(".card-form__note"); 
 
 const statusLabels = {
   watched: "Посмотрел(а)",
@@ -26,6 +28,47 @@ function renderCard(film) {
   viewerPanel.querySelector('[data-field="rating"]').textContent = film.rating || "Нет оценки";
 }
 
+function readForm() {
+  const formData = new FormData(form);
+
+  return {
+    title: formData.get("title"),
+    director: formData.get("director"),
+    year: formData.get("year"),
+    status: formData.get("status"),
+    rating: formData.get("rating"),
+  };
+}
+
+function fillForm(film) {
+  form.elements.title.value = film.title;
+  form.elements.director.value = film.director;
+  form.elements.year.value = film.year;
+  form.elements.status.value = film.status;
+  form.elements.rating.value = film.rating;
+}
+
+function openEditor(film) {
+  const draft = sessionStorage.getItem(DRAFT_KEY);
+
+  form.reset();
+
+  if (draft !== null) {
+    fillForm(JSON.parse(draft));
+    formNote.textContent = "Восстановлен несохранённый черновик";
+  } else {
+    if (film) {
+      fillForm(film);
+    }
+    formNote.textContent = "Заполните информацию о фильме";
+  }
+
+  checkRating();
+  emptyPanel.hidden = true;
+  viewerPanel.hidden = true;
+  editorPanel.hidden = false;
+}
+
 function checkRating() {
   const status = form.elements.status.value;
   const rating = form.elements.rating.value;
@@ -39,11 +82,19 @@ function checkRating() {
   ratingError.hidden = true;
   return true;
 }
-form.addEventListener("input", checkRating);
+
+form.addEventListener("input", function () {
+  checkRating();
+  sessionStorage.setItem(DRAFT_KEY, JSON.stringify(readForm()));
+});
 
 createButton.addEventListener("click", function () {
-  emptyPanel.hidden = true;
-  editorPanel.hidden = false;
+  openEditor(null);
+});
+
+editButton.addEventListener("click", function () {
+  const film = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  openEditor(film);
 });
 
 deleteButton.addEventListener("click", function () {
@@ -53,20 +104,8 @@ deleteButton.addEventListener("click", function () {
   emptyPanel.hidden = false;
 });
 
-editButton.addEventListener("click", function () {
-  const film = JSON.parse(localStorage.getItem(STORAGE_KEY));
-
-  form.elements.title.value = film.title;
-  form.elements.director.value = film.director;
-  form.elements.year.value = film.year;
-  form.elements.status.value = film.status;
-  form.elements.rating.value = film.rating;
-
-  viewerPanel.hidden = true;
-  editorPanel.hidden = false;
-});
-
 cancelButton.addEventListener("click", function () {
+  sessionStorage.removeItem(DRAFT_KEY);
   editorPanel.hidden = true;
 
   if (localStorage.getItem(STORAGE_KEY) !== null) {
@@ -78,21 +117,15 @@ cancelButton.addEventListener("click", function () {
 
 form.addEventListener("submit", function (event) {
   event.preventDefault();
-    if (!checkRating()) {
+
+  if (!checkRating()) {
     return;
   }
 
-  const formData = new FormData(form);
-
-  const film = {
-    title: formData.get("title"),
-    director: formData.get("director"),
-    year: formData.get("year"),
-    status: formData.get("status"),
-    rating: formData.get("rating"),
-  };
+  const film = readForm();
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(film));
+  sessionStorage.removeItem(DRAFT_KEY);
 
   renderCard(film);
   editorPanel.hidden = true;
