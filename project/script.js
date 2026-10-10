@@ -1,3 +1,5 @@
+const STORAGE_KEY = "film-card"; 
+
 const form = document.querySelector(".card-form");
 const emptyPanel = document.querySelector('[data-state-panel="empty"]');
 const editorPanel = document.querySelector('[data-state-panel="editor"]');
@@ -32,8 +34,18 @@ form.addEventListener("submit", function (event) {
     rating: formData.get("rating"),
   };
 
+ localStorage.setItem(STORAGE_KEY, JSON.stringify(film));
 
   renderCard(film);
   editorPanel.hidden = true;
   viewerPanel.hidden = false;
 });
+
+const savedData = localStorage.getItem(STORAGE_KEY);
+
+if (savedData !== null) {
+  const film = JSON.parse(savedData);
+  renderCard(film);
+  emptyPanel.hidden = true;
+  viewerPanel.hidden = false;
+}
