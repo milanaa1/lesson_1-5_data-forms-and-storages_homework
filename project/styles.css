@@ -406,3 +406,25 @@ textarea.field__control {
   }
 }
 
+.field--choice {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.field__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.field__option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.saved-card__row dd {
+  overflow-wrap: anywhere;
+}
