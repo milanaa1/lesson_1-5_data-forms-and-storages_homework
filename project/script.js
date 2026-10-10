@@ -6,6 +6,7 @@ const editorPanel = document.querySelector('[data-state-panel="editor"]');
 const viewerPanel = document.querySelector('[data-state-panel="viewer"]');
 const createButton = document.querySelector('[data-action="create"]');
 const deleteButton = document.querySelector('[data-action="delete"]');
+const editButton = document.querySelector('[data-action="edit"]');
 
 function renderCard(film) {
   viewerPanel.querySelector('[data-field="title"]').textContent = film.title;
@@ -25,6 +26,19 @@ deleteButton.addEventListener("click", function () {
   form.reset();
   viewerPanel.hidden = true;
   emptyPanel.hidden = false;
+});
+
+editButton.addEventListener("click", function () {
+  const film = JSON.parse(localStorage.getItem(STORAGE_KEY));
+
+  form.elements.title.value = film.title;
+  form.elements.director.value = film.director;
+  form.elements.year.value = film.year;
+  form.elements.status.value = film.status;
+  form.elements.rating.value = film.rating;
+
+  viewerPanel.hidden = true;
+  editorPanel.hidden = false;
 });
 
 form.addEventListener("submit", function (event) {
