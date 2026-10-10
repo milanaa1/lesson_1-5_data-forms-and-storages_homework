@@ -81,8 +81,6 @@
             <span class="field__hint">Минимум 2 символа</span>
           </div>
 
-          <span class="field__error" data-error="rating" hidden></span>
-
           <div class="field">
             <label class="field__label" for="card-year">Год выхода</label>
             <input class="field__control" id="card-year" name="year" type="number" min="1895" max="2026"
@@ -116,6 +114,7 @@
             <input class="field__control" id="card-rating" name="rating" type="number" min="1" max="10"
               placeholder="От 1 до 10" />
             <span class="field__hint">Необязательно, если фильм ещё не просмотрен</span>
+            <span class="field__error" data-error="rating" hidden></span>
           </div>
 
           <div class="card-form__actions">
