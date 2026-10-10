@@ -7,6 +7,9 @@ const viewerPanel = document.querySelector('[data-state-panel="viewer"]');
 const createButton = document.querySelector('[data-action="create"]');
 const deleteButton = document.querySelector('[data-action="delete"]');
 const editButton = document.querySelector('[data-action="edit"]');
+const cancelButton = document.querySelector('[data-action="cancel"]');
+const HINT_KEY = "film-hint-shown";
+const statusText = document.querySelector(".workspace__status");
 
 const statusLabels = {
   watched: "Посмотрел(а)",
@@ -47,6 +50,16 @@ editButton.addEventListener("click", function () {
   editorPanel.hidden = false;
 });
 
+cancelButton.addEventListener("click", function () {
+  editorPanel.hidden = true;
+
+  if (localStorage.getItem(STORAGE_KEY) !== null) {
+    viewerPanel.hidden = false;
+  } else {
+    emptyPanel.hidden = false;
+  }
+});
+
 form.addEventListener("submit", function (event) {
   event.preventDefault();
 
@@ -74,4 +87,11 @@ if (savedData !== null) {
   renderCard(film);
   emptyPanel.hidden = true;
   viewerPanel.hidden = false;
+}
+
+if (sessionStorage.getItem(HINT_KEY) === null) {
+  statusText.textContent = "Подсказка: карточка сохранится даже после перезагрузки";
+  sessionStorage.setItem(HINT_KEY, "yes");
+} else {
+  statusText.textContent = "";
 }
