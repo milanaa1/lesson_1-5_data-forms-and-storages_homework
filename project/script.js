@@ -8,3 +8,11 @@ createButton.addEventListener("click", function () {
   emptyPanel.hidden = true;
   editorPanel.hidden = false;
 });
+
+const film = {
+  title: formData.get("title"),
+  director: formData.get("director"),
+  year: formData.get("year"),
+  status: formData.get("status"),
+  rating: formData.get("rating"),
+};
