@@ -10,6 +10,7 @@ const editButton = document.querySelector('[data-action="edit"]');
 const cancelButton = document.querySelector('[data-action="cancel"]');
 const HINT_KEY = "film-hint-shown";
 const statusText = document.querySelector(".workspace__status");
+const ratingError = document.querySelector('[data-error="rating"]');
 
 const statusLabels = {
   watched: "Посмотрел(а)",
@@ -24,6 +25,21 @@ function renderCard(film) {
   viewerPanel.querySelector('[data-field="status"]').textContent = statusLabels[film.status];
   viewerPanel.querySelector('[data-field="rating"]').textContent = film.rating || "Нет оценки";
 }
+
+function checkRating() {
+  const status = form.elements.status.value;
+  const rating = form.elements.rating.value;
+
+  if (status === "planned" && rating !== "") {
+    ratingError.textContent = "Нельзя оценить фильм, который вы ещё не посмотрели";
+    ratingError.hidden = false;
+    return false;
+  }
+
+  ratingError.hidden = true;
+  return true;
+}
+form.addEventListener("input", checkRating);
 
 createButton.addEventListener("click", function () {
   emptyPanel.hidden = true;
@@ -62,6 +78,9 @@ cancelButton.addEventListener("click", function () {
 
 form.addEventListener("submit", function (event) {
   event.preventDefault();
+    if (!checkRating()) {
+    return;
+  }
 
   const formData = new FormData(form);
 

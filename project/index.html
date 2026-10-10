@@ -26,8 +26,7 @@
       <p class="intro__eyebrow">Формы и хранилища</p>
       <h1 class="intro__title" id="page-title">Сохраненная карточка</h1>
       <p class="intro__lead">
-        Выберите тему, настройте форму и самостоятельно свяжите ввод,
-        отображение и хранение данных.
+        Записывайте фильмы, которые посмотрели или хотите посмотреть. Карточка сохранится в браузере.
       </p>
     </section>
 
@@ -35,7 +34,7 @@
       <header class="workspace__header">
         <div>
           <p class="workspace__kicker">Рабочая область</p>
-          <h2 class="workspace__title" id="workspace-title">Ваша тема</h2>
+          <h2 class="workspace__title" id="workspace-title">Фильм</h2>
         </div>
 
         <p class="workspace__status" aria-live="polite">Данные еще не проверены</p>
@@ -47,8 +46,7 @@
         <div class="app-state__content">
           <h3 class="app-state__title">Карточка пока не создана</h3>
           <p class="app-state__text">
-            Начните с формы. После сохранения это состояние должно смениться
-            просмотром карточки.
+            Добавьте фильм, и здесь появится его карточка.
           </p>
           <button class="button button--primary" type="button" data-action="create">
             Создать карточку
@@ -82,6 +80,8 @@
               placeholder="Например, Кристофер Нолан" required />
             <span class="field__hint">Минимум 2 символа</span>
           </div>
+
+          <span class="field__error" data-error="rating" hidden></span>
 
           <div class="field">
             <label class="field__label" for="card-year">Год выхода</label>

@@ -425,6 +425,7 @@ textarea.field__control {
   cursor: pointer;
 }
 
-.saved-card__row dd {
-  overflow-wrap: anywhere;
+.field__error {
+  color: var(--danger);
+  font-size: 0.78rem;
 }
