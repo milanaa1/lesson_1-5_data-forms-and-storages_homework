@@ -8,12 +8,18 @@ const createButton = document.querySelector('[data-action="create"]');
 const deleteButton = document.querySelector('[data-action="delete"]');
 const editButton = document.querySelector('[data-action="edit"]');
 
+const statusLabels = {
+  watched: "Посмотрел(а)",
+  watching: "Смотрю",
+  planned: "Хочу посмотреть",
+};
+
 function renderCard(film) {
   viewerPanel.querySelector('[data-field="title"]').textContent = film.title;
   viewerPanel.querySelector('[data-field="director"]').textContent = film.director;
   viewerPanel.querySelector('[data-field="year"]').textContent = film.year;
-  viewerPanel.querySelector('[data-field="status"]').textContent = film.status;
-  viewerPanel.querySelector('[data-field="rating"]').textContent = film.rating;
+  viewerPanel.querySelector('[data-field="status"]').textContent = statusLabels[film.status];
+  viewerPanel.querySelector('[data-field="rating"]').textContent = film.rating || "Нет оценки";
 }
 
 createButton.addEventListener("click", function () {
