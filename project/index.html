@@ -54,6 +54,22 @@
         </div>
       </section>
 
+            <!-- Состояние 4: список сохранённых фильмов. -->
+      <section class="app-state app-state--list" data-state-panel="list" hidden>
+        <p class="app-state__index">04</p>
+
+        <div class="film-list">
+          <div class="film-list__header">
+            <h3 class="film-list__title">Мои фильмы</h3>
+            <button class="button button--primary" type="button" data-action="add">
+              Добавить фильм
+            </button>
+          </div>
+
+          <ul class="film-list__items" data-film-list></ul>
+        </div>
+      </section>
+
       <!-- Состояние 2: форма редактирования фильма. -->
       <section class="app-state app-state--editor" data-state-panel="editor" hidden>
         <p class="app-state__index">02</p>
@@ -155,12 +171,15 @@
             </div>
           </dl>
 
-          <div class="saved-card__actions">
+                    <div class="saved-card__actions">
             <button class="button button--primary" type="button" data-action="edit">
               Редактировать
             </button>
             <button class="button button--danger" type="button" data-action="delete">
               Удалить
+            </button>
+            <button class="button button--secondary" type="button" data-action="back">
+              К списку
             </button>
           </div>
         </article>

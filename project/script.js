@@ -1,16 +1,22 @@
-const STORAGE_KEY = "film-card";
+const STORAGE_KEY = "film-cards";
 const DRAFT_KEY = "film-draft";
 const HINT_KEY = "film-hint-shown";
 const LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
 const form = document.querySelector(".card-form");
-const emptyPanel = document.querySelector('[data-state-panel="empty"]');
-const editorPanel = document.querySelector('[data-state-panel="editor"]');
-const viewerPanel = document.querySelector('[data-state-panel="viewer"]');
+const panels = {
+  empty: document.querySelector('[data-state-panel="empty"]'),
+  list: document.querySelector('[data-state-panel="list"]'),
+  editor: document.querySelector('[data-state-panel="editor"]'),
+  viewer: document.querySelector('[data-state-panel="viewer"]'),
+};
+const filmList = document.querySelector("[data-film-list]");
 const createButton = document.querySelector('[data-action="create"]');
+const addButton = document.querySelector('[data-action="add"]');
 const deleteButton = document.querySelector('[data-action="delete"]');
 const editButton = document.querySelector('[data-action="edit"]');
 const cancelButton = document.querySelector('[data-action="cancel"]');
+const backButton = document.querySelector('[data-action="back"]');
 const statusText = document.querySelector(".workspace__status");
 const ratingError = document.querySelector('[data-error="rating"]');
 const formNote = document.querySelector(".card-form__note");
@@ -21,12 +27,83 @@ const statusLabels = {
   planned: "Хочу посмотреть",
 };
 
+let currentId = null;
+
+function showPanel(name) {
+  for (const key in panels) {
+    panels[key].hidden = key !== name;
+  }
+}
+
+function loadFilms() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+
+  if (saved === null) {
+    return [];
+  }
+
+  try {
+    const films = JSON.parse(saved);
+    return Array.isArray(films) ? films : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFilms(films) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(films));
+}
+
 function renderCard(film) {
-  viewerPanel.querySelector('[data-field="title"]').textContent = film.title;
-  viewerPanel.querySelector('[data-field="director"]').textContent = film.director;
-  viewerPanel.querySelector('[data-field="year"]').textContent = film.year;
-  viewerPanel.querySelector('[data-field="status"]').textContent = statusLabels[film.status];
-  viewerPanel.querySelector('[data-field="rating"]').textContent = film.rating || "Нет оценки";
+  panels.viewer.querySelector('[data-field="title"]').textContent = film.title;
+  panels.viewer.querySelector('[data-field="director"]').textContent = film.director;
+  panels.viewer.querySelector('[data-field="year"]').textContent = film.year;
+  panels.viewer.querySelector('[data-field="status"]').textContent = statusLabels[film.status] || "—";
+  panels.viewer.querySelector('[data-field="rating"]').textContent = film.rating || "Нет оценки";
+}
+
+function renderList() {
+  const films = loadFilms();
+
+  if (films.length === 0) {
+    showPanel("empty");
+    return;
+  }
+
+  filmList.replaceChildren();
+
+  films.forEach(function (film) {
+    const item = document.createElement("li");
+    const button = document.createElement("button");
+
+    button.className = "film-list__item";
+    button.type = "button";
+    button.textContent = film.title + " (" + film.year + ") — " + (statusLabels[film.status] || "");
+    button.addEventListener("click", function () {
+      openViewer(film.id);
+    });
+
+    item.append(button);
+    filmList.append(item);
+  });
+
+  showPanel("list");
+}
+
+function openViewer(id) {
+  const film = loadFilms().find(function (item) {
+    return item.id === id;
+  });
+
+  if (!film) {
+    currentId = null;
+    renderList();
+    return;
+  }
+
+  currentId = id;
+  renderCard(film);
+  showPanel("viewer");
 }
 
 function readForm() {
@@ -49,25 +126,18 @@ function fillForm(film) {
   form.elements.rating.value = film.rating;
 }
 
-function openEditor(film) {
-  const draft = sessionStorage.getItem(DRAFT_KEY);
+function readDraft() {
+  const saved = sessionStorage.getItem(DRAFT_KEY);
 
-  form.reset();
-
-  if (draft !== null) {
-    fillForm(JSON.parse(draft));
-    formNote.textContent = "Восстановлен несохранённый черновик";
-  } else {
-    if (film) {
-      fillForm(film);
-    }
-    formNote.textContent = "Заполните информацию о фильме";
+  if (saved === null) {
+    return null;
   }
 
-  checkRating();
-  emptyPanel.hidden = true;
-  viewerPanel.hidden = true;
-  editorPanel.hidden = false;
+  try {
+    return JSON.parse(saved);
+  } catch {
+    return null;
+  }
 }
 
 function checkRating() {
@@ -84,35 +154,68 @@ function checkRating() {
   return true;
 }
 
+function openEditor(film) {
+  const draft = readDraft();
+
+  form.reset();
+
+  if (draft !== null && draft.id === currentId) {
+    fillForm(draft.film);
+    formNote.textContent = "Восстановлен несохранённый черновик";
+  } else {
+    if (film) {
+      fillForm(film);
+    }
+    formNote.textContent = "Заполните информацию о фильме";
+  }
+
+  checkRating();
+  showPanel("editor");
+}
+
+function startNewFilm() {
+  currentId = null;
+  openEditor(null);
+}
+
 form.addEventListener("input", function () {
   checkRating();
-  sessionStorage.setItem(DRAFT_KEY, JSON.stringify(readForm()));
+  sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ id: currentId, film: readForm() }));
 });
 
-createButton.addEventListener("click", function () {
-  openEditor(null);
-});
+createButton.addEventListener("click", startNewFilm);
+addButton.addEventListener("click", startNewFilm);
 
 editButton.addEventListener("click", function () {
-  const film = JSON.parse(localStorage.getItem(STORAGE_KEY));
+  const film = loadFilms().find(function (item) {
+    return item.id === currentId;
+  });
   openEditor(film);
 });
 
 deleteButton.addEventListener("click", function () {
-  localStorage.removeItem(STORAGE_KEY);
+  const films = loadFilms().filter(function (item) {
+    return item.id !== currentId;
+  });
+
+  saveFilms(films);
+  currentId = null;
   form.reset();
-  viewerPanel.hidden = true;
-  emptyPanel.hidden = false;
+  renderList();
+});
+
+backButton.addEventListener("click", function () {
+  currentId = null;
+  renderList();
 });
 
 cancelButton.addEventListener("click", function () {
   sessionStorage.removeItem(DRAFT_KEY);
-  editorPanel.hidden = true;
 
-  if (localStorage.getItem(STORAGE_KEY) !== null) {
-    viewerPanel.hidden = false;
+  if (currentId !== null) {
+    openViewer(currentId);
   } else {
-    emptyPanel.hidden = false;
+    renderList();
   }
 });
 
@@ -124,14 +227,28 @@ form.addEventListener("submit", function (event) {
   }
 
   const film = readForm();
+  const films = loadFilms();
   film.savedAt = Date.now();
 
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(film));
-  sessionStorage.removeItem(DRAFT_KEY);
+  if (currentId === null) {
+    film.id = String(Date.now());
+    films.push(film);
+  } else {
+    film.id = currentId;
+    const index = films.findIndex(function (item) {
+      return item.id === currentId;
+    });
 
-  renderCard(film);
-  editorPanel.hidden = true;
-  viewerPanel.hidden = false;
+    if (index !== -1) {
+      films[index] = film;
+    } else {
+      films.push(film);
+    }
+  }
+
+  saveFilms(films);
+  sessionStorage.removeItem(DRAFT_KEY);
+  openViewer(film.id);
 });
 
 window.addEventListener("storage", function (event) {
@@ -139,40 +256,32 @@ window.addEventListener("storage", function (event) {
     return;
   }
 
-  if (event.newValue === null) {
-    viewerPanel.hidden = true;
-    if (editorPanel.hidden) {
-      emptyPanel.hidden = false;
-    }
+  if (!panels.editor.hidden) {
     return;
   }
 
-  renderCard(JSON.parse(event.newValue));
-
-  if (editorPanel.hidden) {
-    emptyPanel.hidden = true;
-    viewerPanel.hidden = false;
+  if (currentId !== null) {
+    openViewer(currentId);
+  } else {
+    renderList();
   }
 });
 
 if (sessionStorage.getItem(HINT_KEY) === null) {
-  statusText.textContent = "Подсказка: карточка сохранится даже после перезагрузки";
+  statusText.textContent = "Подсказка: фильмы сохранятся даже после перезагрузки";
   sessionStorage.setItem(HINT_KEY, "yes");
 } else {
   statusText.textContent = "";
 }
 
-const savedData = localStorage.getItem(STORAGE_KEY);
+const allFilms = loadFilms();
+const freshFilms = allFilms.filter(function (film) {
+  return Date.now() - film.savedAt <= LIFETIME_MS;
+});
 
-if (savedData !== null) {
-  const film = JSON.parse(savedData);
-
-  if (Date.now() - film.savedAt > LIFETIME_MS) {
-    localStorage.removeItem(STORAGE_KEY);
-    statusText.textContent = "Карточка устарела (старше 7 дней) и удалена. Создайте новую.";
-  } else {
-    renderCard(film);
-    emptyPanel.hidden = true;
-    viewerPanel.hidden = false;
-  }
+if (freshFilms.length < allFilms.length) {
+  saveFilms(freshFilms);
+  statusText.textContent = "Карточки старше 7 дней удалены. Добавьте фильмы заново.";
 }
+
+renderList();
