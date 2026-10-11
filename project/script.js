@@ -1,6 +1,7 @@
 const STORAGE_KEY = "film-card";
 const DRAFT_KEY = "film-draft";
 const HINT_KEY = "film-hint-shown";
+const LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
 const form = document.querySelector(".card-form");
 const emptyPanel = document.querySelector('[data-state-panel="empty"]');
@@ -12,7 +13,7 @@ const editButton = document.querySelector('[data-action="edit"]');
 const cancelButton = document.querySelector('[data-action="cancel"]');
 const statusText = document.querySelector(".workspace__status");
 const ratingError = document.querySelector('[data-error="rating"]');
-const formNote = document.querySelector(".card-form__note"); 
+const formNote = document.querySelector(".card-form__note");
 
 const statusLabels = {
   watched: "Посмотрел(а)",
@@ -123,6 +124,7 @@ form.addEventListener("submit", function (event) {
   }
 
   const film = readForm();
+  film.savedAt = Date.now();
 
   localStorage.setItem(STORAGE_KEY, JSON.stringify(film));
   sessionStorage.removeItem(DRAFT_KEY);
@@ -132,18 +134,45 @@ form.addEventListener("submit", function (event) {
   viewerPanel.hidden = false;
 });
 
-const savedData = localStorage.getItem(STORAGE_KEY);
+window.addEventListener("storage", function (event) {
+  if (event.key !== STORAGE_KEY) {
+    return;
+  }
 
-if (savedData !== null) {
-  const film = JSON.parse(savedData);
-  renderCard(film);
-  emptyPanel.hidden = true;
-  viewerPanel.hidden = false;
-}
+  if (event.newValue === null) {
+    viewerPanel.hidden = true;
+    if (editorPanel.hidden) {
+      emptyPanel.hidden = false;
+    }
+    return;
+  }
+
+  renderCard(JSON.parse(event.newValue));
+
+  if (editorPanel.hidden) {
+    emptyPanel.hidden = true;
+    viewerPanel.hidden = false;
+  }
+});
 
 if (sessionStorage.getItem(HINT_KEY) === null) {
   statusText.textContent = "Подсказка: карточка сохранится даже после перезагрузки";
   sessionStorage.setItem(HINT_KEY, "yes");
 } else {
   statusText.textContent = "";
+}
+
+const savedData = localStorage.getItem(STORAGE_KEY);
+
+if (savedData !== null) {
+  const film = JSON.parse(savedData);
+
+  if (Date.now() - film.savedAt > LIFETIME_MS) {
+    localStorage.removeItem(STORAGE_KEY);
+    statusText.textContent = "Карточка устарела (старше 7 дней) и удалена. Создайте новую.";
+  } else {
+    renderCard(film);
+    emptyPanel.hidden = true;
+    viewerPanel.hidden = false;
+  }
 }
